@@ -1,0 +1,38 @@
+name: Agent Development Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run tests
+        run: |
+          echo "Running tests..."
+          # Add your test commands here
+          
+      - name: Close related issue
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          ISSUE=$(gh pr view $PR_NUMBER --json body -q '.body' | grep -oE 'closes #[[:digit:]]+|fixes #[[:digit:]]+|resolve #[[:digit:]]+' | head -1)
+          if [ -n "$ISSUE" ]; then
+            echo "This PR will close: $ISSUE"
+          fi
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build
+        run: |
+          echo "Building..."
+          # Add build commands here
